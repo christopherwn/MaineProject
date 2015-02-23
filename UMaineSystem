@@ -1,0 +1,131 @@
+PImage mapImage;
+Table locations;
+Table nameTable;
+int rowCount;
+
+Table dataTable;
+float dataMin = MAX_FLOAT;
+float dataMax = MIN_FLOAT;
+
+int mode = 0; //0=cars, 1=something else
+void setup(){
+   size(587,750);
+    mapImage = loadImage("maine-county-map.gif"); 
+    locations = new Table("UMaineSystem.tsv");
+    nameTable = new Table("names.tsv");
+    rowCount = locations.getRowCount();
+    
+    dataTable = new Table("Data.tsv");
+    
+      
+    for (int row = 0; row < rowCount; row++) {
+      float value = dataTable.getFloat(row, 1);
+      if (value > dataMax) {
+      dataMax = value;
+    }
+      if (value < dataMin) {
+      dataMin = value;
+    }
+  }
+  
+}
+
+void draw(){
+ background(0);
+  image(mapImage, 0, 0); 
+  
+  
+  fill(0);
+  noStroke();
+  
+  
+  for(int row = 0; row<rowCount; row++){
+     float x = locations.getFloat(row, 1);
+     float y = locations.getFloat(row, 2);
+     String abbrev = locations.getString(row,0);
+     drawData(x, y, abbrev);
+  }
+  
+
+  //draw boxes
+  drawBoxes();
+  
+}
+
+
+void drawBoxes() {
+  textAlign(LEFT);
+  //draw car box
+  stroke(100);
+  strokeWeight(2);
+  strokeCap(ROUND);
+  fill(187);
+  rect(10,10,100,20);
+  fill(255,0,0);
+  text("Passenger Cars",17,25);
+
+  stroke(100);
+  strokeWeight(2);
+  strokeCap(ROUND);
+  fill(187);
+  rect(10,35,100,20);
+  fill(255,0,0);
+  text("Homes' heated",17,50);
+  
+  stroke(100);
+  strokeWeight(2);
+  strokeCap(ROUND);
+  fill(187);
+  rect(10,60,100,20);
+  fill(255,0,0);
+  text("Pounds of Coal",17,75);
+     
+}
+
+
+void mouseClicked() {
+  //is it inside car button?
+  if(mouseX > 10 && mouseX < 100 && mouseY > 10 && mouseY < 30) {
+    mode = 0;
+  }
+  else if(mouseX > 10 && mouseX < 100 && mouseY > 35 && mouseY < 55) {
+    mode = 1;
+  } 
+  else if (mouseX > 10 && mouseX < 100 && mouseY > 60 && mouseY < 80){
+    mode = 2; 
+  }   
+}
+
+void drawData(float x, float y, String abbrev) {
+  float value = dataTable.getFloat(abbrev, 1);  
+  float radius = 0;
+  if (value >= 0) {
+    radius = map(value, dataMin, dataMax, 3, 30);
+  } 
+ 
+  //ellipse(x, y, radius, radius);
+
+  ellipseMode(RADIUS);
+  ellipse(x, y, radius, radius);
+  
+  if (dist(x, y, mouseX, mouseY) < radius+2) {
+    fill(0);
+    textAlign(CENTER);
+    String popup = nameTable.getString(abbrev, 1);
+    popup+= " " + value + "\n";
+    if(mode==0) {
+       popup += "Number of cars: " + dataTable.getString(abbrev,3);
+    }
+    else if(mode==1) {
+       popup += "Number of Homes Heated: " + dataTable.getString(abbrev,4); 
+    }
+    else  {
+       popup += "Number of Pounds of Coal: " + dataTable.getString(abbrev,5); 
+    }
+    text(popup, x, y-radius-15);
+
+
+  }
+
+
+}
